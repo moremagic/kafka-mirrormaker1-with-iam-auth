@@ -1,0 +1,39 @@
+name: Push to DockerHub registry
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: actions-hub/docker/login@master
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_REGISTRY_URL: docker.io
+
+      - name: Build :Tag
+        if: success()
+        run: docker build -t ${GITHUB_REPOSITORY}:${IMAGE_TAG} .
+
+      - name: Build :latest
+        if: success()
+        run: docker build -t ${GITHUB_REPOSITORY}:latest .
+
+      - name: Deploy :Tag
+        if: success()
+        uses: actions-hub/docker@master
+        with:
+          args: push ${GITHUB_REPOSITORY}:${IMAGE_TAG}
+
+      - name: Deploy :latest
+        if: success()
+        uses: actions-hub/docker@master
+        with:
+          args: push ${GITHUB_REPOSITORY}:latest
